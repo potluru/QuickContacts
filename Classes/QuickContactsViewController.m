@@ -217,14 +217,30 @@ enum TableRowSelected
 // Called when users tap "Create New Contact" in the application. Allows users to create a new contact.
 -(void)showNewPersonViewController
 {
-	ABNewPersonViewController *picker = [[ABNewPersonViewController alloc] init];
-	picker.newPersonViewDelegate = self;
+//	ABNewPersonViewController *picker = [[ABNewPersonViewController alloc] init];
+//	picker.newPersonViewDelegate = self;
 	
-	UINavigationController *navigation = [[UINavigationController alloc] initWithRootViewController:picker];
-	[self presentModalViewController:navigation animated:YES];
+//	UINavigationController *navigation = [[UINavigationController alloc] initWithRootViewController:picker];
+//	[self presentModalViewController:navigation animated:YES];
+
 	
-	[picker release];
-	[navigation release];	
+    
+//	[picker release];
+//	[navigation release];
+
+    
+    ABAddressBookRef addressBook = ABAddressBookCreate();
+    ABRecordRef person = ABPersonCreate();
+    
+    CFErrorRef  anError = NULL;
+    ABRecordSetValue(person,kABPersonFirstNameProperty,CFSTR("test-0509"),&anError);
+    
+    ABAddressBookAddRecord(addressBook, person, &anError);
+
+    ABAddressBookSave(addressBook, &anError);
+    
+    [person release];
+	CFRelease(addressBook);
 }
 
 

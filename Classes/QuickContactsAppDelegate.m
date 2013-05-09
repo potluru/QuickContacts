@@ -52,7 +52,8 @@
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application 
 {    
-    [window addSubview:navigationController.view];
+//    [window addSubview:navigationController.view];
+     [self.window setRootViewController:navigationController];
 	// Override point for customization after application launch
     [window makeKeyAndVisible];
 }
