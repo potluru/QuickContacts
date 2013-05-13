@@ -7,43 +7,6 @@
  
   Version: 1.1
  
- Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
- Inc. ("Apple") in consideration of your agreement to the following
- terms, and your use, installation, modification or redistribution of
- this Apple software constitutes acceptance of these terms.  If you do
- not agree with these terms, please do not use, install, modify or
- redistribute this Apple software.
- 
- In consideration of your agreement to abide by the following terms, and
- subject to these terms, Apple grants you a personal, non-exclusive
- license, under Apple's copyrights in this original Apple software (the
- "Apple Software"), to use, reproduce, modify and redistribute the Apple
- Software, with or without modifications, in source and/or binary forms;
- provided that if you redistribute the Apple Software in its entirety and
- without modifications, you must retain this notice and the following
- text and disclaimers in all such redistributions of the Apple Software.
- Neither the name, trademarks, service marks or logos of Apple Inc. may
- be used to endorse or promote products derived from the Apple Software
- without specific prior written permission from Apple.  Except as
- expressly stated in this notice, no other rights or licenses, express or
- implied, are granted by Apple herein, including but not limited to any
- patent rights that may be infringed by your derivative works or by other
- works in which the Apple Software may be incorporated.
- 
- The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
- MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
- THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
- FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
- OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
- 
- IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
- OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
- MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
- AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
- STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
  
  Copyright (C) 2010 Apple Inc. All Rights Reserved.
  
@@ -104,7 +67,7 @@ enum TableRowSelected
 	if (aCell == nil)
 	{
 		// Make the Display Picker and Create New Contact rows look like buttons
-		if (indexPath.section < 2)
+		if (indexPath.section < 3)
 		{
 			aCell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
 			aCell.textLabel.textAlignment = UITextAlignmentCenter;
@@ -138,9 +101,6 @@ enum TableRowSelected
 		case kUIDisplayContactRow:
 			[self showPersonViewController];
 			break;
-		case kUIEditUnknownContactRow:
-			[self showUnknownPersonViewController];
-			break;
 		default:
 			[self showPeoplePickerController];
 			break;
@@ -167,14 +127,25 @@ enum TableRowSelected
 	NSArray *displayedItems = [NSArray arrayWithObjects:[NSNumber numberWithInt:kABPersonPhoneProperty], 
 							    [NSNumber numberWithInt:kABPersonEmailProperty],
 							    [NSNumber numberWithInt:kABPersonBirthdayProperty], nil];
-	
-	
+    
 	picker.displayedProperties = displayedItems;
+
+    // Allow users to edit the person’s information
+    picker.editing = YES;
+    
+    [[picker navigationBar] setBarStyle:UIBarStyleBlack];
+    
 	// Show the picker 
 	[self presentModalViewController:picker animated:YES];
     [picker release];	
 }
 
+-(IBAction)addPerson:(id)sender{
+    ABNewPersonViewController *view = [[ABNewPersonViewController alloc] init];
+    view.newPersonViewDelegate = self;
+    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:view];
+    [self presentModalViewController:nc animated:YES];
+}
 
 #pragma mark Display and edit a person
 // Called when users tap "Display and Edit Contact" in the application. Searches for a contact named "Appleseed" in 
@@ -182,35 +153,67 @@ enum TableRowSelected
 // the search is successful. Shows an alert, otherwise.
 -(void)showPersonViewController
 {
-	// Fetch the address book 
-	ABAddressBookRef addressBook = ABAddressBookCreate();
-	// Search for the person named "Appleseed" in the address book
-	NSArray *people = (NSArray *)ABAddressBookCopyPeopleWithName(addressBook, CFSTR("Appleseed"));
-	// Display "Appleseed" information if found in the address book 
-	if ((people != nil) && [people count])
-	{
-		ABRecordRef person = (ABRecordRef)[people objectAtIndex:0];
-		ABPersonViewController *picker = [[[ABPersonViewController alloc] init] autorelease];
-		picker.personViewDelegate = self;
-		picker.displayedPerson = person;
-		// Allow users to edit the person’s information
-		picker.allowsEditing = YES;
-		[self.navigationController pushViewController:picker animated:YES];
-	}
-	else 
-	{
-		// Show an alert if "Appleseed" is not in Contacts
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" 
-														message:@"Could not find Appleseed in the Contacts application" 
-													   delegate:nil 
-											  cancelButtonTitle:@"Cancel" 
-											  otherButtonTitles:nil];
-		[alert show];
-		[alert release];
-	}
+    
+    NSString* searchURL = @"http://192.168.0.119:8080/resty/service/fetchAllContacts";
 	
-	[people release];
-	CFRelease(addressBook);
+	NSError* error = nil;
+	NSURLResponse* response = nil;
+	NSMutableURLRequest* request = [[[NSMutableURLRequest alloc] init] autorelease];
+	
+	NSURL* URL = [NSURL URLWithString:searchURL];
+	[request setURL:URL];
+	[request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
+	[request setTimeoutInterval:30];
+	
+	NSData* data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+	
+	if (error)
+	{
+		NSLog(@"Error performing request %@", searchURL);
+	}
+    
+	NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+	//NSLog(@"We received: %@", jsonString);
+    
+    NSDictionary *results = [jsonString objectFromJSONString];
+	
+	NSArray *movieArray = [results objectForKey:@"uploaded"];
+    
+    if ([movieArray count] > 0)
+    {
+        
+        ABAddressBookRef addressBook = ABAddressBookCreate();
+        
+        for (NSDictionary *movie in movieArray)
+        {
+            ABRecordRef person = ABPersonCreate();
+            CFErrorRef  anError = NULL;
+            
+            NSString *firstName = [movie objectForKey:@"firstName"];
+            NSString *email = [movie objectForKey:@"email"];
+            
+            ABRecordSetValue(person,kABPersonFirstNameProperty,(CFTypeRef)firstName,&anError);
+            
+            ABMutableMultiValueRef emailMultiValue = ABMultiValueCreateMutable(kABPersonEmailProperty);
+            
+            bool didAddEmail = ABMultiValueAddValueAndLabel(emailMultiValue, email, kABOtherLabel, NULL);
+            
+            if (didAddEmail == FALSE) {
+                NSLog(@"Error populating Email field corresonding to: %@ ", email);
+            }
+            
+            ABRecordSetValue(person,kABPersonEmailProperty,emailMultiValue,nil);
+            
+            NSLog(@"First Name found: %@", firstName);
+            ABAddressBookAddRecord(addressBook, person, &anError);
+            ABAddressBookSave(addressBook, &anError);
+            [person release];
+        }
+        
+        CFRelease(addressBook);
+    }
+    
+    
 }
 
 
@@ -218,20 +221,16 @@ enum TableRowSelected
 // Called when users tap "Create New Contact" in the application. Allows users to create a new contact.
 -(void)showNewPersonViewController
 {
-//	ABNewPersonViewController *picker = [[ABNewPersonViewController alloc] init];
-//	picker.newPersonViewDelegate = self;
+	ABNewPersonViewController *picker = [[ABNewPersonViewController alloc] init];
+	picker.newPersonViewDelegate = self;
 	
-//	UINavigationController *navigation = [[UINavigationController alloc] initWithRootViewController:picker];
-//	[self presentModalViewController:navigation animated:YES];
+	UINavigationController *navigation = [[UINavigationController alloc] initWithRootViewController:picker];
+	[self presentModalViewController:navigation animated:YES];
+	   
+	[picker release];
+	[navigation release];
 
-	
-    
-//	[picker release];
-//	[navigation release];
-
-
-//    [self extractJSON];
-    
+/**
     
     NSString* searchURL = @"http://192.168.0.119:8080/resty/service/fetchAllContacts";
 	
@@ -277,6 +276,10 @@ enum TableRowSelected
             
             bool didAddEmail = ABMultiValueAddValueAndLabel(emailMultiValue, email, kABOtherLabel, NULL);
             
+            if (didAddEmail == FALSE) {
+                NSLog(@"Error populating Email field corresonding to: %@ ", email);
+            }
+            
             ABRecordSetValue(person,kABPersonEmailProperty,emailMultiValue,nil);
             
             NSLog(@"First Name found: %@", firstName);
@@ -287,96 +290,49 @@ enum TableRowSelected
     
         CFRelease(addressBook);
     }
-    
-    
-}
-
--(void) extractJSON
-{
-    NSString* searchURL = @"http://192.168.0.119:8080/resty/service/fetchAllContacts";
-	
-	NSError* error = nil;
-	NSURLResponse* response = nil;
-	NSMutableURLRequest* request = [[[NSMutableURLRequest alloc] init] autorelease];
-	
-	NSURL* URL = [NSURL URLWithString:searchURL];
-	[request setURL:URL];
-	[request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
-	[request setTimeoutInterval:30];
-	
-	NSData* data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-	
-	if (error)
-	{
-		NSLog(@"Error performing request %@", searchURL);
-	}
-    
-	NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-	//NSLog(@"We received: %@", jsonString);
-
-    NSDictionary *results = [jsonString objectFromJSONString];
-	
-	NSArray *movieArray = [results objectForKey:@"uploaded"];
-    
-    // Search for year to match
-	for (NSDictionary *movie in movieArray)
-	{
-		NSString *firstName = [movie objectForKey:@"firstName"];
-
-		NSLog(@"First Name found: %@", firstName);
-		
-
-	}
+    */
     
 }
-
-#pragma mark Add data to an existing person
-// Called when users tap "Edit Unknown Contact" in the application. 
--(void)showUnknownPersonViewController
-{
-	ABRecordRef aContact = ABPersonCreate();
-	CFErrorRef anError = NULL;
-	ABMultiValueRef email = ABMultiValueCreateMutable(kABMultiStringPropertyType);
-	bool didAdd = ABMultiValueAddValueAndLabel(email, @"John-Appleseed@mac.com", kABOtherLabel, NULL);
-	
-	if (didAdd == YES)
-	{
-		ABRecordSetValue(aContact, kABPersonEmailProperty, email, &anError);
-		if (anError == NULL)
-		{
-			ABUnknownPersonViewController *picker = [[ABUnknownPersonViewController alloc] init];
-			picker.unknownPersonViewDelegate = self;
-			picker.displayedPerson = aContact;
-			picker.allowsAddingToAddressBook = YES;
-		    picker.allowsActions = YES;
-			picker.alternateName = @"John Appleseed";
-			picker.title = @"John Appleseed";
-			picker.message = @"Company, Inc";
-			
-			[self.navigationController pushViewController:picker animated:YES];
-			[picker release];
-		}
-		else 
-		{
-			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" 
-															message:@"Could not create unknown user" 
-														   delegate:nil 
-												  cancelButtonTitle:@"Cancel"
-												  otherButtonTitles:nil];
-			[alert show];
-			[alert release];
-		}
-	}	
-	CFRelease(email);
-	CFRelease(aContact);
-}
-
 
 #pragma mark ABPeoplePickerNavigationControllerDelegate methods
 // Displays the information of a selected person
 - (BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker shouldContinueAfterSelectingPerson:(ABRecordRef)person
 {
-	return YES;
+
+    //Update Portal
+    
+    [peoplePicker dismissModalViewControllerAnimated:NO];
+    
+    ABAddressBookRef addressBook = ABAddressBookCreate(); // this will open the AddressBook of the iPhone
+    CFErrorRef error             = NULL;
+    
+    //peoplePicker.editing = YES;
+    
+    ABPersonViewController *personController = [[ABPersonViewController alloc] init];
+    
+    personController.addressBook                       = addressBook; // this passes the reference of the Address Book
+    personController.displayedPerson                   = person; // this sets the person reference
+    personController.allowsEditing                     = YES; // this allows the user to edit the details
+    personController.personViewDelegate                = self;
+    personController.navigationItem.rightBarButtonItem = [self editButtonItem]; // this will add the inbuilt Edit button to the view
+    
+    /**
+     * You may need below
+     */
+//    ABRecordSetValue(person, kABPersonJobTitleProperty, (CFStringRef)empObj.jobTitle, &error);
+//    ABAddressBookSave(addressBook, &error);
+    
+    CFRelease(addressBook);
+    
+    personController.displayedProperties = [NSArray arrayWithObject:[NSNumber numberWithInt:kABPersonJobTitleProperty]];
+    
+    // this displays the contact with the details and presents with an Edit button
+    [[self navigationController] pushViewController:personController animated:YES];
+    
+    [personController release];
+    
+    return YES;
+
 }
 
 
@@ -384,7 +340,7 @@ enum TableRowSelected
 - (BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker shouldContinueAfterSelectingPerson:(ABRecordRef)person 
 								property:(ABPropertyID)property identifier:(ABMultiValueIdentifier)identifier
 {
-	return NO;
+	return YES;
 }
 
 
