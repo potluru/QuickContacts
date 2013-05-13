@@ -49,6 +49,7 @@
  
 */
 #import "QuickContactsViewController.h"
+#import "JSONKit.h"
 
 enum TableRowSelected 
 {
@@ -228,21 +229,106 @@ enum TableRowSelected
 //	[picker release];
 //	[navigation release];
 
-    
-    ABAddressBookRef addressBook = ABAddressBookCreate();
-    ABRecordRef person = ABPersonCreate();
-    
-    CFErrorRef  anError = NULL;
-    ABRecordSetValue(person,kABPersonFirstNameProperty,CFSTR("test-0509"),&anError);
-    
-    ABAddressBookAddRecord(addressBook, person, &anError);
 
-    ABAddressBookSave(addressBook, &anError);
+//    [self extractJSON];
     
-    [person release];
-	CFRelease(addressBook);
+    
+    NSString* searchURL = @"http://192.168.0.119:8080/resty/service/fetchAllContacts";
+	
+	NSError* error = nil;
+	NSURLResponse* response = nil;
+	NSMutableURLRequest* request = [[[NSMutableURLRequest alloc] init] autorelease];
+	
+	NSURL* URL = [NSURL URLWithString:searchURL];
+	[request setURL:URL];
+	[request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
+	[request setTimeoutInterval:30];
+	
+	NSData* data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+	
+	if (error)
+	{
+		NSLog(@"Error performing request %@", searchURL);
+	}
+    
+	NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+	//NSLog(@"We received: %@", jsonString);
+    
+    NSDictionary *results = [jsonString objectFromJSONString];
+	
+	NSArray *movieArray = [results objectForKey:@"uploaded"];
+    
+    if ([movieArray count] > 0)
+    {
+
+        ABAddressBookRef addressBook = ABAddressBookCreate();
+
+        for (NSDictionary *movie in movieArray)
+        {
+            ABRecordRef person = ABPersonCreate();
+            CFErrorRef  anError = NULL;
+            
+            NSString *firstName = [movie objectForKey:@"firstName"];
+            NSString *email = [movie objectForKey:@"email"];
+            
+            ABRecordSetValue(person,kABPersonFirstNameProperty,(CFTypeRef)firstName,&anError);
+            
+            ABMutableMultiValueRef emailMultiValue = ABMultiValueCreateMutable(kABPersonEmailProperty);
+            
+            bool didAddEmail = ABMultiValueAddValueAndLabel(emailMultiValue, email, kABOtherLabel, NULL);
+            
+            ABRecordSetValue(person,kABPersonEmailProperty,emailMultiValue,nil);
+            
+            NSLog(@"First Name found: %@", firstName);
+            ABAddressBookAddRecord(addressBook, person, &anError);
+            ABAddressBookSave(addressBook, &anError);
+            [person release];
+        }
+    
+        CFRelease(addressBook);
+    }
+    
+    
 }
 
+-(void) extractJSON
+{
+    NSString* searchURL = @"http://192.168.0.119:8080/resty/service/fetchAllContacts";
+	
+	NSError* error = nil;
+	NSURLResponse* response = nil;
+	NSMutableURLRequest* request = [[[NSMutableURLRequest alloc] init] autorelease];
+	
+	NSURL* URL = [NSURL URLWithString:searchURL];
+	[request setURL:URL];
+	[request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
+	[request setTimeoutInterval:30];
+	
+	NSData* data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+	
+	if (error)
+	{
+		NSLog(@"Error performing request %@", searchURL);
+	}
+    
+	NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+	//NSLog(@"We received: %@", jsonString);
+
+    NSDictionary *results = [jsonString objectFromJSONString];
+	
+	NSArray *movieArray = [results objectForKey:@"uploaded"];
+    
+    // Search for year to match
+	for (NSDictionary *movie in movieArray)
+	{
+		NSString *firstName = [movie objectForKey:@"firstName"];
+
+		NSLog(@"First Name found: %@", firstName);
+		
+
+	}
+    
+}
 
 #pragma mark Add data to an existing person
 // Called when users tap "Edit Unknown Contact" in the application. 

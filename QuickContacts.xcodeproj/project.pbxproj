@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		1D3623260D0F684500981E51 /* QuickContactsAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3623250D0F684500981E51 /* QuickContactsAppDelegate.m */; };
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
+		A77E89801740593300D90DEE /* MainWindow-iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = A77E897E1740593300D90DEE /* MainWindow-iPad.xib */; };
+		A77E898317405F8600D90DEE /* JSONKit.m in Sources */ = {isa = PBXBuildFile; fileRef = A77E898217405F8600D90DEE /* JSONKit.m */; };
 		EB5F77280FD05CA300F02A31 /* QuickContactsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EB5F77270FD05CA300F02A31 /* QuickContactsViewController.m */; };
 		EB5F775E0FD05FD600F02A31 /* Menu.plist in Resources */ = {isa = PBXBuildFile; fileRef = EB5F775D0FD05FD600F02A31 /* Menu.plist */; };
 		EB8BE5951107AE3500EC952D /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = EB8BE5941107AE3500EC952D /* Default.png */; };
@@ -33,6 +35,9 @@
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* QuickContacts_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QuickContacts_Prefix.pch; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* QuickContacts-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "QuickContacts-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+		A77E897F1740593300D90DEE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = "iPad/en.lproj/MainWindow-iPad.xib"; sourceTree = "<group>"; };
+		A77E898117405F8600D90DEE /* JSONKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSONKit.h; sourceTree = "<group>"; };
+		A77E898217405F8600D90DEE /* JSONKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JSONKit.m; sourceTree = "<group>"; };
 		EB2B00770FD08E3600DF3E51 /* ReadMe.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ReadMe.txt; sourceTree = "<group>"; };
 		EB5F77260FD05CA300F02A31 /* QuickContactsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QuickContactsViewController.h; sourceTree = "<group>"; };
 		EB5F77270FD05CA300F02A31 /* QuickContactsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QuickContactsViewController.m; sourceTree = "<group>"; };
@@ -71,6 +76,8 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A77E898117405F8600D90DEE /* JSONKit.h */,
+				A77E898217405F8600D90DEE /* JSONKit.m */,
 				1D3623240D0F684500981E51 /* QuickContactsAppDelegate.h */,
 				1D3623250D0F684500981E51 /* QuickContactsAppDelegate.m */,
 				EB5F77260FD05CA300F02A31 /* QuickContactsViewController.h */,
@@ -93,6 +100,7 @@
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
+				A77E897D1740593200D90DEE /* iPad */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
 			);
@@ -138,6 +146,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		A77E897D1740593200D90DEE /* iPad */ = {
+			isa = PBXGroup;
+			children = (
+				A77E897E1740593300D90DEE /* MainWindow-iPad.xib */,
+			);
+			name = iPad;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -165,6 +181,7 @@
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "QuickContacts" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -196,6 +213,7 @@
 				EBAA0CDD11CD2E6D0000C424 /* Icon@2x.png in Resources */,
 				EBCBC1C511D404AC009DD8F3 /* iTunesArtwork in Resources */,
 				EBCBC1C711D404B4009DD8F3 /* Icon-Small-50.png in Resources */,
+				A77E89801740593300D90DEE /* MainWindow-iPad.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,12 +227,21 @@
 				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
 				1D3623260D0F684500981E51 /* QuickContactsAppDelegate.m in Sources */,
 				EB5F77280FD05CA300F02A31 /* QuickContactsViewController.m in Sources */,
+				A77E898317405F8600D90DEE /* JSONKit.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		A77E897E1740593300D90DEE /* MainWindow-iPad.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A77E897F1740593300D90DEE /* en */,
+			);
+			name = "MainWindow-iPad.xib";
+			sourceTree = "<group>";
+		};
 		EBAA0CBA11CD2DFB0000C424 /* MainWindow.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -236,8 +263,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = QuickContacts_Prefix.pch;
 				INFOPLIST_FILE = "QuickContacts-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 3.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				PRODUCT_NAME = QuickContacts;
+				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Debug;
 		};
@@ -249,8 +277,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = QuickContacts_Prefix.pch;
 				INFOPLIST_FILE = "QuickContacts-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 3.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				PRODUCT_NAME = QuickContacts;
+				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Release;
 		};
